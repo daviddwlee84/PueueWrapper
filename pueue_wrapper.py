@@ -1,6 +1,43 @@
 import asyncio
 import subprocess
 from loguru import logger
+import json
+from typing import Dict, List, Optional, Union, Any
+from datetime import datetime
+from pydantic import BaseModel, Field, RootModel
+
+
+class TaskStatusInfo(BaseModel):
+    enqueued_at: datetime
+    start: datetime
+    end: datetime
+    result: str
+
+
+class Task(BaseModel):
+    id: int
+    created_at: datetime
+    original_command: str
+    command: str
+    path: str
+    envs: Dict[str, str]
+    group: str
+    dependencies: List[int]
+    priority: int
+    label: Optional[str] = None
+    status: Dict[
+        str, TaskStatusInfo
+    ]  # Using Dict directly to handle different status types
+
+
+class Group(BaseModel):
+    status: str
+    parallel_tasks: int
+
+
+class PueueStatus(BaseModel):
+    tasks: Dict[str, Task]
+    groups: Dict[str, Group]
 
 
 class PueueWrapper:
@@ -58,12 +95,14 @@ class PueueWrapper:
 
         return task_id
 
-    async def get_status(self) -> str:
+    async def get_status(self) -> PueueStatus:
         """
         Retrieves the status of all tasks.
         """
-        # TODO: we should get JSON format
-        return await self._run_pueue_command("status")
+        # Get status in JSON format
+        status_output = await self._run_pueue_command("status", "--json")
+        status_data = json.loads(status_output)
+        return PueueStatus.model_validate(status_data)
 
     async def get_log(self, task_id: str) -> str:
         """
@@ -87,7 +126,20 @@ async def main():
         pueue.submit_and_wait("sleep 5"),
     )
 
-    logger.info(await pueue.get_status())
+    # Get structured status
+    status = await pueue.get_status()
+    task_ids = list(status.tasks.keys())
+    logger.info(f"Tasks: {task_ids}")
+    logger.info(f"Default group status: {status.groups['default'].status}")
+
+    # Log details about first task if any exist
+    if task_ids:
+        first_task = status.tasks[task_ids[0]]
+        logger.info(f"First task command: {first_task.command}")
+        # Get the status type (e.g., "Done", "Running") and its info
+        status_type = next(iter(first_task.status))
+        status_info = first_task.status[status_type]
+        logger.info(f"First task status: {status_type}, result: {status_info.result}")
 
 
 if __name__ == "__main__":
