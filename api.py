@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
-from pueue_wrapper import PueueWrapper
+from pueue_wrapper import PueueWrapper, PueueStatus
 
 # FastAPI setup
 app = FastAPI()
@@ -49,7 +49,7 @@ async def subscribe_to_task(task_id: str):
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
-@app.get("/api/submit_and_wait/{command}")
+@app.get("/api/submit_and_wait")
 async def submit_and_wait(command: str) -> str:
     """
     Submit a task and wait for it asynchronously.
@@ -62,9 +62,10 @@ async def submit_and_wait(command: str) -> str:
 
 
 @app.get("/api/status")
-async def get_status() -> str:
+async def get_status() -> PueueStatus:
     """
     List the status of all tasks.
+    Returns a structured PueueStatus object with tasks and groups information.
     """
     try:
         status = await pueue.get_status()

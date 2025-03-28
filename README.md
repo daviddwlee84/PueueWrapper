@@ -3,9 +3,20 @@
 Python wrapper for [Pueue](https://github.com/Nukesor/pueue)
 
 ```bash
+# NOTE: currently the latest version of pueue is 4.0.0
+brew install pueue
+brew services start pueue
+```
+
+```bash
 uv install
 
+# test pueue wrapper
 python pueue_wrapper.py
+
+# test api
+python -m uvicorn api:app --reload
+# http://127.0.0.1:8000/docs
 ```
 
 ---
