@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
 from pueue_wrapper import PueueWrapper, PueueStatus
 
 # FastAPI setup
@@ -84,6 +84,11 @@ async def get_log(task_id: str) -> str:
         return log
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/")
+async def redirect_root_to_docs():
+    return RedirectResponse("/docs")
 
 
 if __name__ == "__main__":

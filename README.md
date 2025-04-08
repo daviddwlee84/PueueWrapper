@@ -24,3 +24,5 @@ python -m uvicorn api:app --reload
 Try to simplify this: [ML-API-Submit-Template/pueue.py at main · daviddwlee84/ML-API-Submit-Template](https://github.com/daviddwlee84/ML-API-Submit-Template/blob/main/pueue.py)
 
 TODO: use latest syntax (if anything changed) [Release v4.0.0 · Nukesor/pueue](https://github.com/Nukesor/pueue/releases/tag/v4.0.0)
+
+TODO: try to build a MCP server around this (or find MCP server that can directly use any CLI tool)
