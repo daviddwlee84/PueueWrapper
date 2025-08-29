@@ -5,13 +5,7 @@ import json
 from typing import Dict, List, Optional, Union, Any
 from datetime import datetime
 from pydantic import BaseModel, Field, RootModel
-
-
-class TaskStatusInfo(BaseModel):
-    enqueued_at: datetime
-    start: datetime
-    end: datetime
-    result: str
+from models import PueueLogResponse, TaskLogEntry, LogTask, TaskStatusInfo
 
 
 class Task(BaseModel):
@@ -107,10 +101,54 @@ class PueueWrapper:
 
     async def get_log(self, task_id: str) -> str:
         """
-        Retrieves the log of a specific task.
+        Retrieves the log of a specific task in text format.
         """
-        # TODO: we should get JSON format
         return await self._run_pueue_command("log", task_id)
+
+    async def get_logs_json(
+        self, task_ids: Optional[List[str]] = None
+    ) -> PueueLogResponse:
+        """
+        Retrieves the logs of all tasks or specific tasks in JSON format.
+
+        Args:
+            task_ids: Optional list of task IDs to retrieve. If None, gets all tasks.
+
+        Returns:
+            PueueLogResponse: Structured log data for all requested tasks
+        """
+        # Get logs in JSON format - pueue log -j gets all task logs
+        if task_ids:
+            # For specific task IDs, we'll need to filter the response
+            log_output = await self._run_pueue_command("log", "--json")
+        else:
+            log_output = await self._run_pueue_command("log", "--json")
+
+        log_data = json.loads(log_output)
+
+        # Filter by task_ids if provided
+        if task_ids:
+            filtered_data = {
+                task_id: log_data[task_id]
+                for task_id in task_ids
+                if task_id in log_data
+            }
+            log_data = filtered_data
+
+        return PueueLogResponse.model_validate(log_data)
+
+    async def get_task_log_entry(self, task_id: str) -> Optional[TaskLogEntry]:
+        """
+        Retrieves a single task's log entry with structured data.
+
+        Args:
+            task_id: The ID of the task to retrieve
+
+        Returns:
+            TaskLogEntry: The structured log entry for the task, or None if not found
+        """
+        logs = await self.get_logs_json([task_id])
+        return logs.get(task_id)
 
 
 # Example of usage
@@ -141,6 +179,37 @@ async def main():
         status_type = next(iter(first_task.status))
         status_info = first_task.status[status_type]
         logger.info(f"First task status: {status_type}, result: {status_info.result}")
+
+        # Demo new structured log functionality
+        logger.info("=== Testing new structured log functionality ===")
+
+        # Get single task log entry
+        task_log_entry = await pueue.get_task_log_entry(task_ids[0])
+        if task_log_entry:
+            logger.info(
+                f"Task {task_log_entry.task.id} output: {task_log_entry.output}"
+            )
+            logger.info(f"Task command: {task_log_entry.task.command}")
+            logger.info(f"Task created at: {task_log_entry.task.created_at}")
+            logger.info(f"Task path: {task_log_entry.task.path}")
+
+        # Get all logs in structured format
+        all_logs = await pueue.get_logs_json()
+        logger.info(f"Total tasks in logs: {len(all_logs)}")
+
+        # Demo iteration over log response
+        for task_id, log_entry in all_logs.items():
+            task = log_entry.task
+            logger.info(
+                f"Task {task_id}: {task.original_command} -> {log_entry.output[:50]}..."
+            )
+
+        # Get logs for specific tasks only
+        if len(task_ids) >= 2:
+            specific_logs = await pueue.get_logs_json(task_ids[:2])
+            logger.info(
+                f"Specific logs for first 2 tasks: {list(specific_logs.keys())}"
+            )
 
 
 if __name__ == "__main__":

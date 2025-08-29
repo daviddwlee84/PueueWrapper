@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse, RedirectResponse
 from pueue_wrapper import PueueWrapper, PueueStatus
+from models import PueueLogResponse, TaskLogEntry
+from typing import Optional, List
 
 # FastAPI setup
 app = FastAPI()
@@ -77,11 +79,45 @@ async def get_status() -> PueueStatus:
 @app.get("/api/log/{task_id}")
 async def get_log(task_id: str) -> str:
     """
-    Retrieve the log of a specific task.
+    Retrieve the log of a specific task in text format.
     """
     try:
         log = await pueue.get_log(task_id)
         return log
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/logs/json")
+async def get_logs_json(task_ids: Optional[str] = None) -> PueueLogResponse:
+    """
+    Retrieve structured logs for all tasks or specific tasks.
+
+    Args:
+        task_ids: Optional comma-separated list of task IDs (e.g., "1,2,3")
+    """
+    try:
+        task_id_list = None
+        if task_ids:
+            task_id_list = [tid.strip() for tid in task_ids.split(",")]
+        logs = await pueue.get_logs_json(task_id_list)
+        return logs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/log/{task_id}/json")
+async def get_task_log_entry(task_id: str) -> TaskLogEntry:
+    """
+    Retrieve structured log entry for a specific task.
+    """
+    try:
+        log_entry = await pueue.get_task_log_entry(task_id)
+        if log_entry is None:
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+        return log_entry
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
