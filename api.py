@@ -13,12 +13,12 @@ pueue = PueueWrapper()
 
 
 @app.get("/api/add")
-async def add_task(command: str) -> str:
+async def add_task(command: str, label: Optional[str] = None) -> str:
     """
     Add a task to Pueue asynchronously.
     """
     try:
-        task_id = await pueue.add_task(command)
+        task_id = await pueue.add_task(command, label)
         return task_id
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -53,12 +53,12 @@ async def subscribe_to_task(task_id: str):
 
 
 @app.get("/api/submit_and_wait")
-async def submit_and_wait(command: str) -> str:
+async def submit_and_wait(command: str, label: Optional[str] = None) -> str:
     """
     Submit a task and wait for it asynchronously.
     """
     try:
-        result = await pueue.submit_and_wait(command)
+        result = await pueue.submit_and_wait(command, label)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,0 +1,39 @@
+---
+globs: *.py
+---
+
+# Python Development Guidelines
+
+## Package Manager
+
+- **Always use UV** as the package manager for this project
+- Before running any Python scripts, ensure the virtual environment is activated:
+
+  ```bash
+  source .venv/bin/activate
+  ```
+
+## Code Standards
+
+- All **comments should be written in English**
+- All **responses and user-facing text should be in Traditional Chinese**
+- Use type hints for function parameters and return values
+- Follow PEP 8 style guidelines
+- Use Pydantic models for data validation and serialization
+
+## Project Structure
+
+- Main source code goes in `src/` directory
+- Examples and quick tests go in `examples/` directory
+- Documentation files go in `docs/` directory
+
+## Dependencies
+
+- Install new packages using: `uv add package-name`
+- Update dependencies using: `uv lock`
+- Check dependencies in [pyproject.toml](mdc:pyproject.toml)
+
+## Testing
+
+- Use the examples in [examples/](mdc:examples/) for quick testing
+- Run examples to verify functionality after changes

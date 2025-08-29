@@ -1,0 +1,41 @@
+---
+globs: *.py,*.md,*.toml
+---
+
+# Code Style and Documentation Guidelines
+
+## Language Standards
+
+- **Comments**: Always write in English for better international collaboration
+- **Documentation**: Write in English for technical documentation
+- **User-facing text**: Use Traditional Chinese (繁體中文) for responses and user interface
+- **Error messages**: Use Traditional Chinese for user-facing errors
+
+## Python Code Style
+
+- Follow PEP 8 style guidelines
+- Use type hints for all function parameters and return values
+- Use descriptive variable and function names in English
+- Prefer async/await over callbacks when possible
+- Use Pydantic models for data validation
+
+## Documentation Structure
+
+- Place all documentation in [docs/](mdc:docs/) directory
+- Use Markdown format for documentation files
+- Include code examples in documentation
+- Keep README.md updated with current usage patterns
+
+## Example Code
+
+- Place examples in [examples/](mdc:examples/) directory
+- Examples should be self-contained and runnable
+- Include comprehensive comments explaining the code
+- Demonstrate both sync and async usage patterns
+
+## Model Design
+
+- Use Pydantic models for all data structures
+- Keep models in [src/pueue_wrapper/models/](mdc:src/pueue_wrapper/models/)
+- Provide convenience methods for common operations
+- Include proper type annotations and default values

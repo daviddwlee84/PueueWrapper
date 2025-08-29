@@ -1,0 +1,40 @@
+---
+description: PueueWrapper architecture and implementation details
+---
+
+# PueueWrapper Architecture Guide
+
+## Core Components
+
+### Main Wrapper Classes
+
+1. **PueueWrapper** ([src/pueue_wrapper/pueue_wrapper.py](mdc:src/pueue_wrapper/pueue_wrapper.py))
+   - Asynchronous implementation for high-performance usage
+   - Provides async methods for task management
+   - Uses asyncio for non-blocking operations
+
+2. **PueueWrapperSync** ([src/pueue_wrapper/pueue_sync_wrapper.py](mdc:src/pueue_wrapper/pueue_sync_wrapper.py))
+   - Synchronous wrapper around the async implementation
+   - Suitable for simple scripts and synchronous workflows
+   - Uses `asyncio.run()` internally
+
+### Data Models
+
+All Pydantic models are located in [src/pueue_wrapper/models/](mdc:src/pueue_wrapper/models/):
+
+- **Base Models**: [base.py](mdc:src/pueue_wrapper/models/base.py) - Shared base classes
+- **Status Models**: [status.py](mdc:src/pueue_wrapper/models/status.py) - Task and group status structures
+- **Log Models**: [logs.py](mdc:src/pueue_wrapper/models/logs.py) - Log entry and response structures
+
+### Key Features
+
+- **Structured Data**: All pueue JSON responses are parsed into typed Pydantic models
+- **Task Management**: Add, wait, subscribe to tasks
+- **Status Monitoring**: Get structured status information
+- **Log Retrieval**: Fetch task logs in both text and structured formats
+
+## Usage Patterns
+
+- For async applications: Use `PueueWrapper` directly
+- For sync applications: Use `PueueWrapperSync`
+- For data analysis: Leverage the structured models for easy data access

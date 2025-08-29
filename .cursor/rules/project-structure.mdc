@@ -1,0 +1,37 @@
+---
+alwaysApply: true
+---
+
+# PueueWrapper Project Structure Guide
+
+This project follows a structured layout for better organization:
+
+## Core Directories
+
+- **Source Code**: All main code is located in [src/](mdc:src/) directory
+- **Documentation**: All documentation files are placed in [docs/](mdc:docs/) directory  
+- **Examples**: Quick tests and usage examples are stored in [examples/](mdc:examples/) directory
+
+## Main Entry Points
+
+- **Models**: [src/pueue_wrapper/models/](mdc:src/pueue_wrapper/models/) - Pydantic data models
+- **Package Init**: [src/pueue_wrapper/__init__.py](mdc:src/pueue_wrapper/__init__.py) - Package exports
+
+Interfaces:
+
+- **Async Wrapper**: [src/pueue_wrapper/pueue_wrapper.py](mdc:src/pueue_wrapper/pueue_wrapper.py) - Main async implementation
+- **Sync Wrapper**: [src/pueue_wrapper/pueue_sync_wrapper.py](mdc:src/pueue_wrapper/pueue_sync_wrapper.py) - Synchronous wrapper
+- **API**: [api.py](mdc:api.py) - Host the wrapper with FastAPI
+
+NOTE: when you update a new interface, you should update all interface as well. Including Async Wrapper, Sync Wrapper, and API
+
+## Package Management
+
+- Uses **UV** as the package manager
+- Dependencies are defined in [pyproject.toml](mdc:pyproject.toml)
+- Lock file is [uv.lock](mdc:uv.lock)
+
+## Examples and Testing
+
+- Status examples: [examples/example_status.py](mdc:examples/example_status.py)
+- Usage examples: [examples/example_usage.py](mdc:examples/example_usage.py)

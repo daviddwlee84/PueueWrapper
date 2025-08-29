@@ -1,0 +1,65 @@
+---
+description: UV package manager commands and workflow
+---
+
+# UV Package Manager Commands
+
+## Virtual Environment Setup
+
+```bash
+# Create virtual environment (if not exists)
+uv venv
+
+# Activate virtual environment (required before running Python)
+source .venv/bin/activate
+```
+
+## Dependency Management
+
+```bash
+# Install all dependencies from pyproject.toml
+uv sync
+
+# Add a new dependency
+uv add package-name
+
+# Add a development dependency
+uv add --dev package-name
+
+# Update all dependencies
+uv lock --upgrade
+
+# Install a specific version
+uv add "package-name==1.0.0"
+```
+
+## Running Scripts
+
+```bash
+# Always activate environment first
+source .venv/bin/activate
+
+# Then run Python scripts
+python examples/example_usage.py
+python examples/example_status.py
+```
+
+## Project Commands
+
+```bash
+# Install project in development mode
+uv pip install -e .
+
+# Build the package
+uv build
+
+# Check project configuration
+uv tree
+```
+
+## Important Notes
+
+- **Always activate the virtual environment** before running any Python scripts
+- Dependencies are managed in [pyproject.toml](mdc:pyproject.toml)
+- Lock file [uv.lock](mdc:uv.lock) should be committed to version control
+- Use `uv add` instead of `pip install` for consistency
