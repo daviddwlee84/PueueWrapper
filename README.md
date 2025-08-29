@@ -9,14 +9,14 @@ brew services start pueue
 ```
 
 ```bash
-uv install
+uv sync --all-groups
 
-# test pueue wrapper
-python pueue_wrapper.py
+# FastAPI
+pueue-api-server --host 127.0.0.1 --port 8001 --reload
 
-# test api
-python -m uvicorn api:app --reload
-# http://127.0.0.1:8000/docs
+# Streamlit UI
+pueue-ui-server
+
 ```
 
 ---

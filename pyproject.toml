@@ -1,6 +1,6 @@
 [project]
 name = "pueue_wrapper"
-version = "0.1.0"
+version = "0.2.0"
 description = "A wrapper for Pueue"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -14,10 +14,17 @@ dependencies = [
 
 [project.scripts]
 pueue-api-server = "pueue_wrapper.api.run_api_server:cli"
+pueue-ui-server = "pueue_wrapper.ui.run_ui_server:cli"
 
 [dependency-groups]
 dev = [
     "black>=25.1.0",
+]
+
+ui = [
+    "streamlit>=1.49.0",
+    "plotly>=5.0.0",
+    "watchdog>=6.0.0",
 ]
 
 # Make the package installable
