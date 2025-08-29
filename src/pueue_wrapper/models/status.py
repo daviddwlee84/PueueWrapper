@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Union, Any
 from pydantic import BaseModel, Field, RootModel
-from .base import TaskStatusInfo
+from .base import TaskStatusInfo, GroupStatus
 
 
 class Task(BaseModel):
@@ -25,7 +25,7 @@ class Task(BaseModel):
 class Group(BaseModel):
     """任务组信息"""
 
-    status: str  # "Running", "Paused" 等
+    status: GroupStatus  # "Running", "Paused" 等
     parallel_tasks: int  # 并行任务数量
 
 

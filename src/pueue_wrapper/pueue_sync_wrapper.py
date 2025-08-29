@@ -1,9 +1,10 @@
 import asyncio
 import threading
 from pueue_wrapper.pueue_wrapper import PueueWrapper
-from pueue_wrapper.models.status import PueueStatus
+from pueue_wrapper.models.status import PueueStatus, Group
 from pueue_wrapper.models.logs import PueueLogResponse, TaskLogEntry
-from typing import Optional, Any, List
+from pueue_wrapper.models.base import TaskControl
+from typing import Optional, Any, List, Dict, Union
 
 
 # Synchronous wrapper class
@@ -41,11 +42,56 @@ class PueueWrapperSync:
             future = executor.submit(run_in_thread)
             return future.result()
 
-    def add_task(self, command: str, label: Optional[str] = None) -> str:
+    def add_task(
+        self,
+        command: str,
+        label: Optional[str] = None,
+        working_directory: Optional[str] = None,
+        group: Optional[str] = None,
+        priority: Optional[int] = None,
+        after: Optional[List[int]] = None,
+        delay: Optional[str] = None,
+        immediate: bool = False,
+        follow: bool = False,
+        stashed: bool = False,
+        escape: bool = False,
+        print_task_id: bool = True,
+    ) -> str:
         """
         Adds a task to the Pueue queue synchronously.
+
+        Args:
+            command: The command to execute
+            label: Optional label for the task
+            working_directory: Working directory for the task
+            group: Group to assign the task to
+            priority: Priority level (higher number = higher priority)
+            after: List of task IDs this task depends on
+            delay: Delay before enqueueing (e.g., "10s", "5m", "1h")
+            immediate: Start the task immediately
+            follow: Follow the task output if started immediately
+            stashed: Create task in stashed state
+            escape: Escape special shell characters
+            print_task_id: Return only task ID (True by default)
+
+        Returns:
+            Task ID as string
         """
-        return self._run_async_method("add_task", command, label)
+        return self._run_async_method(
+            "add_task",
+            command,
+            label,
+            working_directory,
+            group,
+            priority,
+            after,
+            delay,
+            immediate,
+            follow,
+            stashed,
+            escape,
+            print_task_id,
+        )
 
     def wait_for_task(self, task_id: str) -> str:
         """
@@ -115,6 +161,154 @@ class PueueWrapperSync:
             TaskLogEntry: The structured log entry for the task, or None if not found
         """
         return self._run_async_method("get_task_log_entry", task_id)
+
+    # Group Management Methods
+
+    def get_groups(self) -> Dict[str, Group]:
+        """
+        Get all groups and their status synchronously.
+
+        Returns:
+            Dict mapping group names to Group objects
+        """
+        return self._run_async_method("get_groups")
+
+    def add_group(self, group_name: str) -> TaskControl:
+        """
+        Add a new group synchronously.
+
+        Args:
+            group_name: Name of the group to create
+
+        Returns:
+            TaskControl object indicating success/failure
+        """
+        return self._run_async_method("add_group", group_name)
+
+    def remove_group(self, group_name: str) -> TaskControl:
+        """
+        Remove a group synchronously.
+
+        Args:
+            group_name: Name of the group to remove
+
+        Returns:
+            TaskControl object indicating success/failure
+        """
+        return self._run_async_method("remove_group", group_name)
+
+    def set_group_parallel(
+        self, parallel_tasks: int, group: Optional[str] = None
+    ) -> TaskControl:
+        """
+        Set the number of parallel tasks for a group synchronously.
+
+        Args:
+            parallel_tasks: Number of parallel tasks to allow
+            group: Group name (defaults to 'default' if not specified)
+
+        Returns:
+            TaskControl object indicating success/failure
+        """
+        return self._run_async_method("set_group_parallel", parallel_tasks, group)
+
+    # Task Control Methods
+
+    def remove_task(self, task_ids: Union[int, List[int]]) -> TaskControl:
+        """
+        Remove tasks from the queue synchronously.
+
+        Args:
+            task_ids: Single task ID or list of task IDs to remove
+
+        Returns:
+            TaskControl object indicating success/failure
+        """
+        return self._run_async_method("remove_task", task_ids)
+
+    def kill_task(
+        self, task_ids: Union[int, List[int]], group: Optional[str] = None
+    ) -> TaskControl:
+        """
+        Kill running tasks synchronously.
+
+        Args:
+            task_ids: Single task ID or list of task IDs to kill
+            group: Optional group to kill all tasks in
+
+        Returns:
+            TaskControl object indicating success/failure
+        """
+        return self._run_async_method("kill_task", task_ids, group)
+
+    def pause_task(
+        self, task_ids: Union[int, List[int]], group: Optional[str] = None
+    ) -> TaskControl:
+        """
+        Pause tasks or groups synchronously.
+
+        Args:
+            task_ids: Single task ID or list of task IDs to pause
+            group: Optional group to pause all tasks in
+
+        Returns:
+            TaskControl object indicating success/failure
+        """
+        return self._run_async_method("pause_task", task_ids, group)
+
+    def start_task(
+        self, task_ids: Union[int, List[int]], group: Optional[str] = None
+    ) -> TaskControl:
+        """
+        Start/resume tasks or groups synchronously.
+
+        Args:
+            task_ids: Single task ID or list of task IDs to start
+            group: Optional group to start all tasks in
+
+        Returns:
+            TaskControl object indicating success/failure
+        """
+        return self._run_async_method("start_task", task_ids, group)
+
+    def restart_task(
+        self, task_ids: Union[int, List[int]], in_place: bool = False
+    ) -> TaskControl:
+        """
+        Restart tasks synchronously.
+
+        Args:
+            task_ids: Single task ID or list of task IDs to restart
+            in_place: Restart in place (keep same task ID)
+
+        Returns:
+            TaskControl object indicating success/failure
+        """
+        return self._run_async_method("restart_task", task_ids, in_place)
+
+    def clean_tasks(self, group: Optional[str] = None) -> TaskControl:
+        """
+        Clean finished tasks from the list synchronously.
+
+        Args:
+            group: Optional group to clean (cleans all groups if not specified)
+
+        Returns:
+            TaskControl object indicating success/failure
+        """
+        return self._run_async_method("clean_tasks", group)
+
+    def reset_queue(self, group: Optional[str] = None) -> TaskControl:
+        """
+        Reset the queue (remove all tasks) synchronously.
+
+        Args:
+            group: Optional group to reset (resets all groups if not specified)
+
+        Returns:
+            TaskControl object indicating success/failure
+        """
+        return self._run_async_method("reset_queue", group)
 
 
 def _test_sync_functions():
