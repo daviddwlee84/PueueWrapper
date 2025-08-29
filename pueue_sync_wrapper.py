@@ -1,5 +1,6 @@
 import asyncio
 from pueue_wrapper import PueueWrapper, PueueStatus
+from typing import Optional
 
 
 # Synchronous wrapper class
@@ -13,11 +14,11 @@ class PueueWrapperSync:
         """
         return asyncio.run(getattr(self.pueue_wrapper, method)(*args))
 
-    def add_task(self, command: str) -> str:
+    def add_task(self, command: str, label: Optional[str] = None) -> str:
         """
         Adds a task to the Pueue queue synchronously.
         """
-        return self._run_async_method("add_task", command)
+        return self._run_async_method("add_task", command, label)
 
     def wait_for_task(self, task_id: str) -> str:
         """
@@ -31,11 +32,11 @@ class PueueWrapperSync:
         """
         return self._run_async_method("subscribe_to_task", task_id)
 
-    def submit_and_wait(self, command: str) -> str:
+    def submit_and_wait(self, command: str, label: Optional[str] = None) -> str:
         """
         Submit a new task and subscribe to it for completion notification synchronously.
         """
-        return self._run_async_method("submit_and_wait", command)
+        return self._run_async_method("submit_and_wait", command, label)
 
     def get_status(self) -> PueueStatus:
         """
@@ -96,7 +97,7 @@ if __name__ == "__main__":
     logger.info(pueue_sync.get_log(task_id))
 
     # You can submit and monitor multiple tasks synchronously
-    pueue_sync.submit_and_wait("sleep 3")
+    pueue_sync.submit_and_wait("sleep 3", "Sleep 3 seconds")
     pueue_sync.submit_and_wait("sleep 5")
 
     # Get structured status
