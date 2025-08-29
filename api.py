@@ -376,15 +376,19 @@ async def clean_tasks(group: Optional[str] = None) -> TaskControl:
 
 
 @app.delete("/api/tasks/reset")
-async def reset_queue(group: Optional[str] = None) -> TaskControl:
+async def reset_queue(groups: Optional[str] = None, force: bool = False) -> TaskControl:
     """
     Reset the queue (remove all tasks).
 
     Args:
-        group: Optional group to reset (resets all groups if not specified)
+        groups: Optional comma-separated list of group names to reset (resets all groups if not specified)
+        force: Don't ask for confirmation
     """
     try:
-        result = await pueue.reset_queue(group)
+        groups_list = None
+        if groups:
+            groups_list = [g.strip() for g in groups.split(",")]
+        result = await pueue.reset_queue(groups_list, force)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

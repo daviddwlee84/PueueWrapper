@@ -461,23 +461,28 @@ class PueueWrapper:
         except Exception as e:
             return TaskControl(success=False, message=str(e))
 
-    async def reset_queue(self, group: Optional[str] = None) -> TaskControl:
+    async def reset_queue(
+        self, groups: Optional[List[str]] = None, force: bool = False
+    ) -> TaskControl:
         """
         Reset the queue (remove all tasks).
 
         Args:
-            group: Optional group to reset (resets all groups if not specified)
+            groups: Optional list of group names to reset (resets all groups if not specified)
+            force: Don't ask for confirmation
 
         Returns:
             TaskControl object indicating success/failure
         """
         try:
             args = ["reset"]
-            if group:
-                args.extend(["--group", group])
+            if force:
+                args.append("--force")
+            if groups:
+                args.extend(["--groups", ",".join(groups)])
             await self._run_pueue_command(*args)
             message = (
-                f"Reset queue for group '{group}'" if group else "Reset entire queue"
+                f"Reset queue for groups: {groups}" if groups else "Reset entire queue"
             )
             return TaskControl(success=True, message=message)
         except Exception as e:

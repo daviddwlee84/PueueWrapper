@@ -86,13 +86,18 @@ async def demo_new_features():
     # 4. 演示 reset 功能
     logger.info("\n4. 測試 reset 功能")
 
-    # 重置指定組
-    result = await pueue.reset_queue("test-group")
-    logger.info(f"重置測試組: {result.message}")
+    # 檢查 test-group 是否還存在
+    groups = await pueue.get_groups()
+    if "test-group" in groups:
+        # 重置指定組（需要使用 force 參數避免交互確認）
+        result = await pueue.reset_queue(groups=["test-group"], force=True)
+        logger.info(f"重置測試組: {result.message}")
 
-    # 清理測試組
-    result = await pueue.remove_group("test-group")
-    logger.info(f"移除測試組: {result.message}")
+        # 清理測試組（現在應該是空的）
+        result = await pueue.remove_group("test-group")
+        logger.info(f"移除測試組: {result.message}")
+    else:
+        logger.info("test-group 已不存在，跳過重置步驟")
 
     logger.info("\n=== 所有功能測試完成 ===")
 
@@ -134,5 +139,29 @@ if __name__ == "__main__":
     # 運行異步示例
     asyncio.run(demo_new_features())
 
-    # 運行同步示例
-    demo_sync_wrapper()
+    # 運行同步示例（在獨立的進程中）
+    import subprocess
+    import sys
+
+    logger.info("\n=== 運行同步包裝器測試 ===")
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            """
+import sys
+sys.path.insert(0, '.')
+from examples.example_new_features import demo_sync_wrapper
+demo_sync_wrapper()
+        """,
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.stdout:
+        print(result.stdout)
+    if result.stderr:
+        print("STDERR:", result.stderr)
+    if result.returncode != 0:
+        print(f"同步測試失敗，返回碼: {result.returncode}")

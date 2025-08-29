@@ -298,17 +298,20 @@ class PueueWrapperSync:
         """
         return self._run_async_method("clean_tasks", group)
 
-    def reset_queue(self, group: Optional[str] = None) -> TaskControl:
+    def reset_queue(
+        self, groups: Optional[List[str]] = None, force: bool = False
+    ) -> TaskControl:
         """
         Reset the queue (remove all tasks) synchronously.
 
         Args:
-            group: Optional group to reset (resets all groups if not specified)
+            groups: Optional list of group names to reset (resets all groups if not specified)
+            force: Don't ask for confirmation
 
         Returns:
             TaskControl object indicating success/failure
         """
-        return self._run_async_method("reset_queue", group)
+        return self._run_async_method("reset_queue", groups, force)
 
 
 def _test_sync_functions():
