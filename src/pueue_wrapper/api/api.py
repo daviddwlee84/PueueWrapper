@@ -13,7 +13,7 @@ app = FastAPI()
 pueue = PueueWrapper()
 
 
-@app.get("/api/add")
+@app.get("/api/add", tags=["tasks"])
 async def add_task(
     command: str,
     label: Optional[str] = None,
@@ -73,7 +73,7 @@ async def add_task(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/wait/{task_id}")
+@app.get("/api/wait/{task_id}", tags=["tasks"])
 async def wait_for_task(task_id: str) -> str:
     """
     Wait for a specific task to finish asynchronously.
@@ -85,7 +85,7 @@ async def wait_for_task(task_id: str) -> str:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/subscribe/{task_id}")
+@app.get("/api/subscribe/{task_id}", tags=["tasks"])
 async def subscribe_to_task(task_id: str):
     """
     Subscribe to a task and notify when it finishes using Server-Sent Events (SSE).
@@ -101,7 +101,7 @@ async def subscribe_to_task(task_id: str):
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
-@app.get("/api/submit_and_wait")
+@app.get("/api/submit_and_wait", tags=["tasks"])
 async def submit_and_wait(command: str, label: Optional[str] = None) -> str:
     """
     Submit a task and wait for it asynchronously.
@@ -113,7 +113,7 @@ async def submit_and_wait(command: str, label: Optional[str] = None) -> str:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/submit_and_wait_and_get_output")
+@app.get("/api/submit_and_wait_and_get_output", tags=["tasks"])
 async def submit_and_wait_and_get_output(
     command: str, label: Optional[str] = None
 ) -> str:
@@ -134,7 +134,7 @@ async def submit_and_wait_and_get_output(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/status")
+@app.get("/api/status", tags=["status"])
 async def get_status() -> PueueStatus:
     """
     List the status of all tasks.
@@ -147,7 +147,7 @@ async def get_status() -> PueueStatus:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/log/{task_id}")
+@app.get("/api/log/{task_id}", tags=["logs"])
 async def get_log(task_id: str) -> str:
     """
     Retrieve the log of a specific task in text format.
@@ -159,7 +159,7 @@ async def get_log(task_id: str) -> str:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/logs/json")
+@app.get("/api/logs/json", tags=["logs"])
 async def get_logs_json(task_ids: Optional[str] = None) -> PueueLogResponse:
     """
     Retrieve structured logs for all tasks or specific tasks.
@@ -177,7 +177,7 @@ async def get_logs_json(task_ids: Optional[str] = None) -> PueueLogResponse:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/log/{task_id}/json")
+@app.get("/api/log/{task_id}/json", tags=["logs"])
 async def get_task_log_entry(task_id: str) -> TaskLogEntry:
     """
     Retrieve structured log entry for a specific task.
@@ -196,7 +196,7 @@ async def get_task_log_entry(task_id: str) -> TaskLogEntry:
 # Group Management Endpoints
 
 
-@app.get("/api/groups")
+@app.get("/api/groups", tags=["groups"])
 async def get_groups() -> Dict[str, Group]:
     """
     Get all groups and their status.
@@ -208,7 +208,7 @@ async def get_groups() -> Dict[str, Group]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/groups/{group_name}")
+@app.post("/api/groups/{group_name}", tags=["groups"])
 async def add_group(group_name: str) -> TaskControl:
     """
     Add a new group.
@@ -220,7 +220,7 @@ async def add_group(group_name: str) -> TaskControl:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/groups/{group_name}")
+@app.delete("/api/groups/{group_name}", tags=["groups"])
 async def remove_group(group_name: str) -> TaskControl:
     """
     Remove a group.
@@ -232,7 +232,7 @@ async def remove_group(group_name: str) -> TaskControl:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.put("/api/groups/{group_name}/parallel")
+@app.put("/api/groups/{group_name}/parallel", tags=["groups"])
 async def set_group_parallel(
     group_name: Optional[str] = None, parallel_tasks: int = 1
 ) -> TaskControl:
@@ -249,7 +249,7 @@ async def set_group_parallel(
 # Task Control Endpoints
 
 
-@app.delete("/api/tasks")
+@app.delete("/api/tasks", tags=["tasks"])
 async def remove_task(task_ids: str) -> TaskControl:
     """
     Remove tasks from the queue.
@@ -265,7 +265,7 @@ async def remove_task(task_ids: str) -> TaskControl:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/tasks/kill")
+@app.post("/api/tasks/kill", tags=["tasks"])
 async def kill_task(
     task_ids: Optional[str] = None, group: Optional[str] = None
 ) -> TaskControl:
@@ -291,7 +291,7 @@ async def kill_task(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/tasks/pause")
+@app.post("/api/tasks/pause", tags=["tasks"])
 async def pause_task(
     task_ids: Optional[str] = None, group: Optional[str] = None
 ) -> TaskControl:
@@ -317,7 +317,7 @@ async def pause_task(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/tasks/start")
+@app.post("/api/tasks/start", tags=["tasks"])
 async def start_task(
     task_ids: Optional[str] = None, group: Optional[str] = None
 ) -> TaskControl:
@@ -343,7 +343,7 @@ async def start_task(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/tasks/restart")
+@app.post("/api/tasks/restart", tags=["tasks"])
 async def restart_task(task_ids: str, in_place: bool = False) -> TaskControl:
     """
     Restart tasks.
@@ -360,7 +360,7 @@ async def restart_task(task_ids: str, in_place: bool = False) -> TaskControl:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/tasks/clean")
+@app.delete("/api/tasks/clean", tags=["tasks"])
 async def clean_tasks(group: Optional[str] = None) -> TaskControl:
     """
     Clean finished tasks from the list.
@@ -375,7 +375,7 @@ async def clean_tasks(group: Optional[str] = None) -> TaskControl:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/tasks/reset")
+@app.delete("/api/tasks/reset", tags=["tasks"])
 async def reset_queue(groups: Optional[str] = None, force: bool = False) -> TaskControl:
     """
     Reset the queue (remove all tasks).

@@ -21,7 +21,7 @@ Interfaces:
 
 - **Async Wrapper**: [src/pueue_wrapper/pueue_wrapper.py](mdc:src/pueue_wrapper/pueue_wrapper.py) - Main async implementation
 - **Sync Wrapper**: [src/pueue_wrapper/pueue_sync_wrapper.py](mdc:src/pueue_wrapper/pueue_sync_wrapper.py) - Synchronous wrapper
-- **API**: [api.py](mdc:api.py) - Host the wrapper with FastAPI
+- **API**: [api.py](mdc:src/pueue_wrapper/api/api.py) - Host the wrapper with FastAPI
 
 NOTE: when you update a new interface, you should update all interface as well. Including Async Wrapper, Sync Wrapper, and API
 
