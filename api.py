@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse, RedirectResponse
-from pueue_wrapper import PueueWrapper, PueueStatus
-from models import PueueLogResponse, TaskLogEntry
+from pueue_wrapper import PueueWrapper
+from models.status import PueueStatus
+from models.logs import PueueLogResponse, TaskLogEntry
 from typing import Optional, List
 
 # FastAPI setup

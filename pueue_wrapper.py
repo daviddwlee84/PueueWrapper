@@ -5,33 +5,9 @@ import json
 from typing import Dict, List, Optional, Union, Any
 from datetime import datetime
 from pydantic import BaseModel, Field, RootModel
-from models import PueueLogResponse, TaskLogEntry, LogTask, TaskStatusInfo
-
-
-class Task(BaseModel):
-    id: int
-    created_at: datetime
-    original_command: str
-    command: str
-    path: str
-    envs: Dict[str, str]
-    group: str
-    dependencies: List[int]
-    priority: int
-    label: Optional[str] = None
-    status: Dict[
-        str, TaskStatusInfo
-    ]  # Using Dict directly to handle different status types
-
-
-class Group(BaseModel):
-    status: str
-    parallel_tasks: int
-
-
-class PueueStatus(BaseModel):
-    tasks: Dict[str, Task]
-    groups: Dict[str, Group]
+from models.logs import PueueLogResponse, TaskLogEntry, LogTask
+from models.status import PueueStatus, Task, Group
+from models.base import TaskStatusInfo
 
 
 class PueueWrapper:

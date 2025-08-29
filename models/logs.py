@@ -1,15 +1,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Union, Any
 from pydantic import BaseModel, Field, RootModel
-
-
-class TaskStatusInfo(BaseModel):
-    """状态信息，包含入队、开始、结束时间和结果"""
-
-    enqueued_at: datetime
-    start: datetime
-    end: datetime
-    result: str
+from .base import TaskStatusInfo
 
 
 class LogTask(BaseModel):
