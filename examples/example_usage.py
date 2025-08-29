@@ -9,7 +9,7 @@ import asyncio
 import json
 from loguru import logger
 from pueue_wrapper import PueueWrapper
-from models.logs import PueueLogResponse, TaskLogEntry
+from pueue_wrapper.models.logs import PueueLogResponse, TaskLogEntry
 
 
 async def demo_structured_logs():

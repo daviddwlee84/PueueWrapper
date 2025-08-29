@@ -5,9 +5,9 @@ import json
 from typing import Dict, List, Optional, Union, Any
 from datetime import datetime
 from pydantic import BaseModel, Field, RootModel
-from models.logs import PueueLogResponse, TaskLogEntry, LogTask
-from models.status import PueueStatus, Task, Group
-from models.base import TaskStatusInfo
+from pueue_wrapper.models.logs import PueueLogResponse, TaskLogEntry, LogTask
+from pueue_wrapper.models.status import PueueStatus, Task, Group
+from pueue_wrapper.models.base import TaskStatusInfo
 
 
 class PueueWrapper:

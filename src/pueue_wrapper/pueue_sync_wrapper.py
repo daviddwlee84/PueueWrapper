@@ -1,5 +1,6 @@
 import asyncio
-from pueue_wrapper import PueueWrapper, PueueStatus
+from pueue_wrapper.pueue_wrapper import PueueWrapper
+from pueue_wrapper.models.status import PueueStatus
 from typing import Optional
 
 

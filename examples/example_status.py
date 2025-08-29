@@ -9,8 +9,8 @@ import asyncio
 import json
 from loguru import logger
 from pueue_wrapper import PueueWrapper
-from models.status import PueueStatus, Task, Group
-from models.base import TaskStatusInfo
+from pueue_wrapper.models.status import PueueStatus, Task, Group
+from pueue_wrapper.models.base import TaskStatusInfo
 
 
 async def demo_status_models():
