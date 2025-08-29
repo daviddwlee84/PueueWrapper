@@ -1,7 +1,9 @@
 import asyncio
+import threading
 from pueue_wrapper.pueue_wrapper import PueueWrapper
 from pueue_wrapper.models.status import PueueStatus
-from typing import Optional
+from pueue_wrapper.models.logs import PueueLogResponse, TaskLogEntry
+from typing import Optional, Any, List
 
 
 # Synchronous wrapper class
@@ -9,11 +11,35 @@ class PueueWrapperSync:
     def __init__(self):
         self.pueue_wrapper = PueueWrapper()
 
-    def _run_async_method(self, method: str, *args) -> str:
+    def _run_async_method(self, method: str, *args) -> Any:
         """
         A helper method to run async methods synchronously.
+        Handles both cases where an event loop is already running and when it's not.
         """
-        return asyncio.run(getattr(self.pueue_wrapper, method)(*args))
+        async_method = getattr(self.pueue_wrapper, method)
+
+        try:
+            # Try to get the current event loop
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # No event loop running, safe to use asyncio.run()
+            return asyncio.run(async_method(*args))
+
+        # Event loop is already running, we need to run in a separate thread
+        def run_in_thread():
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+            try:
+                return new_loop.run_until_complete(async_method(*args))
+            finally:
+                new_loop.close()
+
+        # Run in a separate thread to avoid event loop conflicts
+        import concurrent.futures
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_in_thread)
+            return future.result()
 
     def add_task(self, command: str, label: Optional[str] = None) -> str:
         """
@@ -50,6 +76,45 @@ class PueueWrapperSync:
         Retrieves the log of a specific task synchronously.
         """
         return self._run_async_method("get_log", task_id)
+
+    def submit_and_wait_and_get_output(
+        self, command: str, label: Optional[str] = None
+    ) -> str:
+        """
+        Submit a task, wait for completion, and return the task output synchronously.
+
+        Args:
+            command: The command to execute
+            label: Optional label for the task
+
+        Returns:
+            str: The stdout output from the task
+        """
+        return self._run_async_method("submit_and_wait_and_get_output", command, label)
+
+    def get_logs_json(self, task_ids: Optional[List[str]] = None) -> PueueLogResponse:
+        """
+        Retrieves the logs of all tasks or specific tasks in JSON format synchronously.
+
+        Args:
+            task_ids: Optional list of task IDs to retrieve. If None, gets all tasks.
+
+        Returns:
+            PueueLogResponse: Structured log data for all requested tasks
+        """
+        return self._run_async_method("get_logs_json", task_ids)
+
+    def get_task_log_entry(self, task_id: str) -> Optional[TaskLogEntry]:
+        """
+        Retrieves a single task's log entry with structured data synchronously.
+
+        Args:
+            task_id: The ID of the task to retrieve
+
+        Returns:
+            TaskLogEntry: The structured log entry for the task, or None if not found
+        """
+        return self._run_async_method("get_task_log_entry", task_id)
 
 
 def _test_sync_functions():

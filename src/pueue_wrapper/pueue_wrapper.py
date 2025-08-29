@@ -66,6 +66,32 @@ class PueueWrapper:
 
         return task_id
 
+    async def submit_and_wait_and_get_output(
+        self, command: str, label: Optional[str] = None
+    ) -> str:
+        """
+        Submit a new task, wait for completion, and return the task output.
+
+        Args:
+            command: The command to execute
+            label: Optional label for the task
+
+        Returns:
+            str: The stdout output from the task
+        """
+        # Add a task asynchronously
+        task_id = await self.add_task(command, label)
+        self.logger.info(f"Task {task_id} added, now waiting for it to complete.")
+
+        # Subscribe to the task for completion
+        await self.subscribe_to_task(task_id)
+
+        # Get the output of the task
+        response = await self.get_logs_json([task_id])
+        task_stdout = response.get(task_id).output
+
+        return task_stdout
+
     async def get_status(self) -> PueueStatus:
         """
         Retrieves the status of all tasks.

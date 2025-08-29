@@ -64,6 +64,27 @@ async def submit_and_wait(command: str, label: Optional[str] = None) -> str:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/submit_and_wait_and_get_output")
+async def submit_and_wait_and_get_output(
+    command: str, label: Optional[str] = None
+) -> str:
+    """
+    Submit a task, wait for completion, and return the task output.
+
+    Args:
+        command: The command to execute
+        label: Optional label for the task
+
+    Returns:
+        str: The stdout output from the task
+    """
+    try:
+        result = await pueue.submit_and_wait_and_get_output(command, label)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/status")
 async def get_status() -> PueueStatus:
     """
