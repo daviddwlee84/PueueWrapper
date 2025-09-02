@@ -7,7 +7,12 @@ from datetime import datetime
 from pydantic import BaseModel, Field, RootModel
 from pueue_wrapper.models.logs import PueueLogResponse, TaskLogEntry, LogTask
 from pueue_wrapper.models.status import PueueStatus, Task, Group
-from pueue_wrapper.models.base import TaskStatusInfo, TaskAddOptions, TaskControl
+from pueue_wrapper.models.base import (
+    TaskStatusInfo,
+    TaskAddOptions,
+    TaskControl,
+    GroupStatistics,
+)
 
 
 class PueueWrapper:
@@ -145,59 +150,107 @@ class PueueWrapper:
         await self.subscribe_to_task(task_id)
 
         # Get the output of the task
-        response = await self.get_logs_json([task_id])
+        response = await self.get_logs_json([int(task_id)])
         task_stdout = response.get(task_id).output
 
         return task_stdout
 
-    async def get_status(self) -> PueueStatus:
+    async def get_status(self, group: Optional[str] = None) -> PueueStatus:
         """
-        Retrieves the status of all tasks.
+        Retrieves the status of all tasks or tasks from a specific group.
+
+        Args:
+            group: Optional group name to filter tasks by
+
+        Returns:
+            PueueStatus: The status data for tasks
         """
         # Get status in JSON format
-        status_output = await self._run_pueue_command("status", "--json")
+        args = ["status", "--json"]
+        if group:
+            args.extend(["--group", group])
+
+        status_output = await self._run_pueue_command(*args)
         status_data = json.loads(status_output)
         return PueueStatus.model_validate(status_data)
 
-    async def get_log(self, task_id: str) -> str:
+    async def get_log(
+        self, task_ids: Union[int, List[int]], group: Optional[str] = None
+    ) -> str:
         """
-        Retrieves the log of a specific task in text format.
+        Retrieves the log of specific tasks in text format.
+
+        Args:
+            task_ids: Single task ID or list of task IDs to retrieve
+            group: Optional group to filter tasks by
+
+        Returns:
+            str: The log output for the specified tasks
         """
-        return await self._run_pueue_command("log", task_id)
+        args = ["log"]
+
+        # Add group filter if specified
+        if group:
+            args.extend(["--group", group])
+
+        # Add task IDs
+        if isinstance(task_ids, int):
+            args.append(str(task_ids))
+        else:
+            args.extend([str(tid) for tid in task_ids])
+
+        return await self._run_pueue_command(*args)
 
     async def get_logs_json(
-        self, task_ids: Optional[List[str]] = None
+        self,
+        task_ids: Optional[Union[int, List[int]]] = None,
+        group: Optional[str] = None,
     ) -> PueueLogResponse:
         """
         Retrieves the logs of all tasks or specific tasks in JSON format.
 
         Args:
-            task_ids: Optional list of task IDs to retrieve. If None, gets all tasks.
+            task_ids: Optional single task ID or list of task IDs to retrieve. If None, gets all tasks.
+            group: Optional group to filter tasks by
 
         Returns:
             PueueLogResponse: Structured log data for all requested tasks
         """
-        # Get logs in JSON format - pueue log -j gets all task logs
-        if task_ids:
-            # For specific task IDs, we'll need to filter the response
-            log_output = await self._run_pueue_command("log", "--json")
-        else:
-            log_output = await self._run_pueue_command("log", "--json")
+        args = ["log", "--json"]
 
+        # Add group filter if specified
+        if group:
+            args.extend(["--group", group])
+
+        # Add task IDs if specified
+        if task_ids is not None:
+            if isinstance(task_ids, int):
+                args.append(str(task_ids))
+            else:
+                args.extend([str(tid) for tid in task_ids])
+
+        log_output = await self._run_pueue_command(*args)
         log_data = json.loads(log_output)
 
-        # Filter by task_ids if provided
-        if task_ids:
+        # If specific task_ids were requested, filter the response
+        if task_ids is not None:
+            task_id_strs = (
+                [str(task_ids)]
+                if isinstance(task_ids, int)
+                else [str(tid) for tid in task_ids]
+            )
             filtered_data = {
                 task_id: log_data[task_id]
-                for task_id in task_ids
+                for task_id in task_id_strs
                 if task_id in log_data
             }
             log_data = filtered_data
 
         return PueueLogResponse.model_validate(log_data)
 
-    async def get_task_log_entry(self, task_id: str) -> Optional[TaskLogEntry]:
+    async def get_task_log_entry(
+        self, task_id: Union[int, str]
+    ) -> Optional[TaskLogEntry]:
         """
         Retrieves a single task's log entry with structured data.
 
@@ -207,8 +260,9 @@ class PueueWrapper:
         Returns:
             TaskLogEntry: The structured log entry for the task, or None if not found
         """
-        logs = await self.get_logs_json([task_id])
-        return logs.get(task_id)
+        task_id_int = int(task_id)
+        logs = await self.get_logs_json(task_id_int)
+        return logs.get(str(task_id_int))
 
     # Group Management Methods
 
@@ -241,21 +295,37 @@ class PueueWrapper:
         except Exception as e:
             return TaskControl(success=False, message=str(e))
 
-    async def remove_group(self, group_name: str) -> TaskControl:
+    async def remove_group(
+        self, group_name: str, force_clean: bool = True
+    ) -> TaskControl:
         """
-        Remove a group.
+        Remove a group. Optionally cleans all tasks in the group first.
 
         Args:
             group_name: Name of the group to remove
+            force_clean: If True, clean all tasks in the group before removing it
 
         Returns:
             TaskControl object indicating success/failure
         """
         try:
+            if force_clean:
+                # First, clean all tasks in the group
+                clean_result = await self.clean_tasks(group_name)
+                if not clean_result.success:
+                    return TaskControl(
+                        success=False,
+                        message=f"Failed to clean tasks in group '{group_name}': {clean_result.message}",
+                    )
+
+            # Now try to remove the group
             await self._run_pueue_command("group", "remove", group_name)
-            return TaskControl(
-                success=True, message=f"Group '{group_name}' removed successfully"
-            )
+
+            message = f"Group '{group_name}' removed successfully"
+            if force_clean:
+                message += " (tasks were cleaned first)"
+
+            return TaskControl(success=True, message=message)
         except Exception as e:
             return TaskControl(success=False, message=str(e))
 
@@ -284,6 +354,75 @@ class PueueWrapper:
             )
         except Exception as e:
             return TaskControl(success=False, message=str(e))
+
+    async def get_group_statistics(self, group_name: str) -> GroupStatistics:
+        """
+        Get statistics for a specific group.
+
+        Args:
+            group_name: Name of the group to get statistics for
+
+        Returns:
+            GroupStatistics: Statistics for the group including completion rates
+        """
+        # Get status data for the specific group
+        status = await self.get_status(group=group_name)
+
+        stats = GroupStatistics(group_name=group_name)
+
+        # Count tasks by status
+        for task in status.tasks.values():
+            stats.total_tasks += 1
+
+            # Get the status key (e.g., "Running", "Done", "Queued", etc.)
+            status_key = list(task.status.keys())[0]
+
+            # TODO: use match case
+            if status_key == "Running":
+                stats.running_tasks += 1
+            elif status_key == "Queued":
+                stats.queued_tasks += 1
+            elif status_key == "Paused":
+                stats.paused_tasks += 1
+            elif status_key == "Stashed":
+                stats.stashed_tasks += 1
+            elif status_key == "Done":
+                # Check if the task was successful or failed
+                status_info = task.status[status_key]
+                if hasattr(status_info, "result") and status_info.result is not None:
+                    if self._is_task_successful(status_info.result):
+                        stats.completed_tasks += 1
+                    else:
+                        stats.failed_tasks += 1
+                else:
+                    # If no result information, assume success
+                    stats.completed_tasks += 1
+
+        # Calculate rates
+        stats.calculate_rates()
+
+        return stats
+
+    @staticmethod
+    def _is_task_successful(result: Any) -> bool:
+        """
+        Check if a task result indicates success.
+        # TODO: maybe this shouldn't be part of PueueWrapper (and we should make "result" a data model)
+
+        Args:
+            result: Task result which can be string or dict
+
+        Returns:
+            bool: True if task was successful, False otherwise
+        """
+        if result is None:
+            return False  # No result typically means failed
+        if isinstance(result, str):
+            return result == "Success"
+        if isinstance(result, dict):
+            # Failed tasks typically have {"Failed": exit_code} format
+            return "Failed" not in result
+        return False  # Unknown format, assume failed
 
     # Task Control Methods
 

@@ -3,7 +3,7 @@ import threading
 from pueue_wrapper.pueue_wrapper import PueueWrapper
 from pueue_wrapper.models.status import PueueStatus, Group
 from pueue_wrapper.models.logs import PueueLogResponse, TaskLogEntry
-from pueue_wrapper.models.base import TaskControl
+from pueue_wrapper.models.base import TaskControl, GroupStatistics
 from typing import Optional, Any, List, Dict, Union
 
 
@@ -111,17 +111,29 @@ class PueueWrapperSync:
         """
         return self._run_async_method("submit_and_wait", command, label)
 
-    def get_status(self) -> PueueStatus:
+    def get_status(self, group: Optional[str] = None) -> PueueStatus:
         """
-        Retrieves the status of all tasks synchronously.
-        """
-        return self._run_async_method("get_status")
+        Retrieves the status of all tasks or tasks from a specific group synchronously.
 
-    def get_log(self, task_id: str) -> str:
+        Args:
+            group: Optional group name to filter tasks by
         """
-        Retrieves the log of a specific task synchronously.
+        return self._run_async_method("get_status", group)
+
+    def get_log(
+        self, task_ids: Union[int, List[int]], group: Optional[str] = None
+    ) -> str:
         """
-        return self._run_async_method("get_log", task_id)
+        Retrieves the log of specific tasks in text format synchronously.
+
+        Args:
+            task_ids: Single task ID or list of task IDs to retrieve
+            group: Optional group to filter tasks by
+
+        Returns:
+            str: The log output for the specified tasks
+        """
+        return self._run_async_method("get_log", task_ids, group)
 
     def submit_and_wait_and_get_output(
         self, command: str, label: Optional[str] = None
@@ -138,19 +150,24 @@ class PueueWrapperSync:
         """
         return self._run_async_method("submit_and_wait_and_get_output", command, label)
 
-    def get_logs_json(self, task_ids: Optional[List[str]] = None) -> PueueLogResponse:
+    def get_logs_json(
+        self,
+        task_ids: Optional[Union[int, List[int]]] = None,
+        group: Optional[str] = None,
+    ) -> PueueLogResponse:
         """
         Retrieves the logs of all tasks or specific tasks in JSON format synchronously.
 
         Args:
-            task_ids: Optional list of task IDs to retrieve. If None, gets all tasks.
+            task_ids: Optional single task ID or list of task IDs to retrieve. If None, gets all tasks.
+            group: Optional group to filter tasks by
 
         Returns:
             PueueLogResponse: Structured log data for all requested tasks
         """
-        return self._run_async_method("get_logs_json", task_ids)
+        return self._run_async_method("get_logs_json", task_ids, group)
 
-    def get_task_log_entry(self, task_id: str) -> Optional[TaskLogEntry]:
+    def get_task_log_entry(self, task_id: Union[int, str]) -> Optional[TaskLogEntry]:
         """
         Retrieves a single task's log entry with structured data synchronously.
 
@@ -185,17 +202,30 @@ class PueueWrapperSync:
         """
         return self._run_async_method("add_group", group_name)
 
-    def remove_group(self, group_name: str) -> TaskControl:
+    def remove_group(self, group_name: str, force_clean: bool = True) -> TaskControl:
         """
-        Remove a group synchronously.
+        Remove a group synchronously. Optionally cleans all tasks in the group first.
 
         Args:
             group_name: Name of the group to remove
+            force_clean: If True, clean all tasks in the group before removing it
 
         Returns:
             TaskControl object indicating success/failure
         """
-        return self._run_async_method("remove_group", group_name)
+        return self._run_async_method("remove_group", group_name, force_clean)
+
+    def get_group_statistics(self, group_name: str) -> GroupStatistics:
+        """
+        Get statistics for a specific group synchronously.
+
+        Args:
+            group_name: Name of the group to get statistics for
+
+        Returns:
+            GroupStatistics: Statistics for the group including completion rates
+        """
+        return self._run_async_method("get_group_statistics", group_name)
 
     def set_group_parallel(
         self, parallel_tasks: int, group: Optional[str] = None

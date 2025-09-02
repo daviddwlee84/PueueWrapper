@@ -72,8 +72,21 @@ class PueueStatus(BaseModel):
         return {
             task_id: task
             for task_id, task in self.tasks.items()
-            if "Done" in task.status and task.status["Done"].result != "Success"
+            if "Done" in task.status
+            and self._is_task_failed(task.status["Done"].result)
         }
+
+    @staticmethod
+    def _is_task_failed(result: Any) -> bool:
+        """检查任务是否失败"""
+        if result is None:
+            return True  # No result typically means failed
+        if isinstance(result, str):
+            return result != "Success"
+        if isinstance(result, dict):
+            # Failed tasks typically have {"Failed": exit_code} format
+            return "Failed" in result
+        return True  # Unknown format, assume failed
 
     def task_count_by_status(self) -> Dict[str, int]:
         """按状态统计任务数量"""

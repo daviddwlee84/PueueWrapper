@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse, RedirectResponse
 from pueue_wrapper import PueueWrapper
 from pueue_wrapper.models.status import PueueStatus, Group
 from pueue_wrapper.models.logs import PueueLogResponse, TaskLogEntry
-from pueue_wrapper.models.base import TaskControl
+from pueue_wrapper.models.base import TaskControl, GroupStatistics
 from typing import Optional, List, Dict, Union
 
 # FastAPI setup
@@ -135,43 +135,81 @@ async def submit_and_wait_and_get_output(
 
 
 @app.get("/api/status", tags=["status"])
-async def get_status() -> PueueStatus:
+async def get_status(group: Optional[str] = None) -> PueueStatus:
     """
-    List the status of all tasks.
+    List the status of all tasks or tasks from a specific group.
     Returns a structured PueueStatus object with tasks and groups information.
+
+    Args:
+        group: Optional group name to filter tasks by
     """
     try:
-        status = await pueue.get_status()
+        status = await pueue.get_status(group=group)
         return status
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/log/{task_id}", tags=["logs"])
-async def get_log(task_id: str) -> str:
+async def get_log_single(task_id: str, group: Optional[str] = None) -> str:
     """
     Retrieve the log of a specific task in text format.
+
+    Args:
+        task_id: The task ID to retrieve logs for
+        group: Optional group to filter by
     """
     try:
-        log = await pueue.get_log(task_id)
+        log = await pueue.get_log(int(task_id), group=group)
         return log
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/logs", tags=["logs"])
+async def get_logs_multiple(
+    task_ids: Optional[str] = None, group: Optional[str] = None
+) -> str:
+    """
+    Retrieve logs for multiple tasks in text format.
+
+    Args:
+        task_ids: Optional comma-separated list of task IDs (e.g., "1,2,3")
+        group: Optional group to filter by
+    """
+    try:
+        if task_ids:
+            task_id_list = [int(tid.strip()) for tid in task_ids.split(",")]
+            logs = await pueue.get_log(task_id_list, group=group)
+        else:
+            # If no task_ids specified, get all tasks from status first
+            status = await pueue.get_status(group=group)
+            if status.tasks:
+                all_task_ids = [int(tid) for tid in status.tasks.keys()]
+                logs = await pueue.get_log(all_task_ids, group=group)
+            else:
+                logs = ""
+        return logs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/logs/json", tags=["logs"])
-async def get_logs_json(task_ids: Optional[str] = None) -> PueueLogResponse:
+async def get_logs_json(
+    task_ids: Optional[str] = None, group: Optional[str] = None
+) -> PueueLogResponse:
     """
     Retrieve structured logs for all tasks or specific tasks.
 
     Args:
         task_ids: Optional comma-separated list of task IDs (e.g., "1,2,3")
+        group: Optional group to filter by
     """
     try:
         task_id_list = None
         if task_ids:
-            task_id_list = [tid.strip() for tid in task_ids.split(",")]
-        logs = await pueue.get_logs_json(task_id_list)
+            task_id_list = [int(tid.strip()) for tid in task_ids.split(",")]
+        logs = await pueue.get_logs_json(task_id_list, group=group)
         return logs
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -221,13 +259,32 @@ async def add_group(group_name: str) -> TaskControl:
 
 
 @app.delete("/api/groups/{group_name}", tags=["groups"])
-async def remove_group(group_name: str) -> TaskControl:
+async def remove_group(group_name: str, force_clean: bool = True) -> TaskControl:
     """
-    Remove a group.
+    Remove a group. Optionally cleans all tasks in the group first.
+
+    Args:
+        group_name: Name of the group to remove
+        force_clean: If True, clean all tasks in the group before removing it
     """
     try:
-        result = await pueue.remove_group(group_name)
+        result = await pueue.remove_group(group_name, force_clean=force_clean)
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/groups/{group_name}/statistics", tags=["groups"])
+async def get_group_statistics(group_name: str) -> GroupStatistics:
+    """
+    Get statistics for a specific group including completion and failure rates.
+
+    Args:
+        group_name: Name of the group to get statistics for
+    """
+    try:
+        stats = await pueue.get_group_statistics(group_name)
+        return stats
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

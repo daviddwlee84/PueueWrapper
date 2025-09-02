@@ -14,7 +14,9 @@ class TaskStatusInfo(BaseModel):
     enqueued_at: Optional[datetime] = None
     start: Optional[datetime] = None  # Running/Queued 状态可能没有 start
     end: Optional[datetime] = None  # Running/Queued 状态可能没有 end
-    result: Optional[str] = None  # Running/Queued 状态可能没有 result
+    result: Optional[Any] = (
+        None  # Running/Queued 状态可能没有 result，可能是字符串或字典
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -64,3 +66,37 @@ class TaskControl(BaseModel):
     success: bool
     message: Optional[str] = None
     task_ids: Optional[List[int]] = None
+
+
+class GroupStatistics(BaseModel):
+    """
+    Group statistics model
+
+    TODO: Accept non-group statistics (all tasks)
+    """
+
+    group_name: str
+    total_tasks: int = 0
+    running_tasks: int = 0
+    queued_tasks: int = 0
+    completed_tasks: int = 0
+    failed_tasks: int = 0
+    paused_tasks: int = 0
+    stashed_tasks: int = 0
+
+    # Calculated rates
+    completion_rate: float = 0.0  # Percentage of completed tasks (successful + failed)
+    success_rate: float = 0.0  # Percentage of successful tasks among completed
+    failure_rate: float = 0.0  # Percentage of failed tasks among completed
+
+    def calculate_rates(self):
+        """Calculate completion, success, and failure rates"""
+        if self.total_tasks > 0:
+            self.completion_rate = (
+                (self.completed_tasks + self.failed_tasks) / self.total_tasks * 100
+            )
+
+            total_finished = self.completed_tasks + self.failed_tasks
+            if total_finished > 0:
+                self.success_rate = self.completed_tasks / total_finished * 100
+                self.failure_rate = self.failed_tasks / total_finished * 100
