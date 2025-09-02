@@ -1,0 +1,35 @@
+{
+    // TODO: ruff
+    // -------- Python interpreter ----------
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    // -------- Formatting ------------------
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
+    },
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    // -------- Environment -----------------
+    "python.envFile": "${workspaceFolder}/.env",
+    "terminal.integrated.env.linux": { // make shells inherit
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
+    },
+    // "jupyter.envFile": "${workspaceFolder}/.env",
+    // "jupyter.runStartupCommands": [
+    //     "%load_ext autoreload",
+    //     "%autoreload 2",
+    //     "from dotenv import load_dotenv, find_dotenv; load_dotenv(find_dotenv())",
+    //     "import numpy as np, pandas as pd"
+    // ],
+    // -------- Type checking ---------------
+    // This is for VSCode
+    // "python.analysis.typeCheckingMode": "off",
+    // "python.analysis.extraPaths": [
+    //     "${workspaceFolder}/src",
+    // ],
+    // This is for Cursor
+    "cursorpyright.analysis.extraPaths": [
+        "${workspaceFolder}/src",
+        "${workspaceFolder}/src/pueue_wrapper/ui"
+    ],
+    "cursorpyright.analysis.typeCheckingMode": "off",
+}

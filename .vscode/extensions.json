@@ -1,0 +1,19 @@
+{
+    "recommendations": [
+        "ms-python.python",
+        "anysphere.cursorpyright",
+        // In order to use Anysphere Python, `anysphere.pyright` must be uninstalled.
+        // In order to use Anysphere Python, `ms-python.vscode-pylance` must be uninstalled.
+        // "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.debugpy",
+        "yzhang.markdown-all-in-one",
+        "DavidAnson.vscode-markdownlint",
+        "tombonnike.vscode-status-bar-format-toggle",
+        "streetsidesoftware.code-spell-checker",
+        "donjayamanne.githistory",
+        "eamodio.gitlens",
+        "mechatroner.rainbow-csv",
+        "SpecStory.specstory-vscode",
+    ]
+}
