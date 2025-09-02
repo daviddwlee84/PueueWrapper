@@ -225,10 +225,17 @@ def _display_log_entry(task_id: str, log_entry, max_length: Optional[int] = None
     with col2:
         if hasattr(task, "created_at") and task.created_at:
             st.write(f"**創建時間:** {format_datetime(task.created_at)}")
-        if hasattr(task, "start") and task.start:
-            st.write(f"**開始時間:** {format_datetime(task.start)}")
-        if hasattr(task, "end") and task.end:
-            st.write(f"**結束時間:** {format_datetime(task.end)}")
+
+        # 從狀態信息中獲取時間信息
+        if hasattr(task, "status") and task.status:
+            status_key = list(task.status.keys())[0]
+            status_info = task.status[status_key]
+
+            if hasattr(status_info, "start") and status_info.start:
+                st.write(f"**開始時間:** {format_datetime(status_info.start)}")
+            if hasattr(status_info, "end") and status_info.end:
+                st.write(f"**結束時間:** {format_datetime(status_info.end)}")
+
         if hasattr(task, "path") and task.path:
             st.write(f"**工作目錄:** {task.path}")
 

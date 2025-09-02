@@ -256,10 +256,17 @@ def _display_task_details(tasks):
             st.write("**執行信息**")
             st.write(f"**工作目錄:** {task.path or '無'}")
             st.write(f"**創建時間:** {task.created_at or '無'}")
-            if task.start:
-                st.write(f"**開始時間:** {task.start}")
-            if task.end:
-                st.write(f"**結束時間:** {task.end}")
+
+            # 從狀態信息中獲取開始和結束時間
+            status_key = list(task.status.keys())[0]
+            status_info = task.status[status_key]
+
+            if hasattr(status_info, "start") and status_info.start:
+                st.write(f"**開始時間:** {status_info.start}")
+            if hasattr(status_info, "end") and status_info.end:
+                st.write(f"**結束時間:** {status_info.end}")
+            if hasattr(status_info, "enqueued_at") and status_info.enqueued_at:
+                st.write(f"**入隊時間:** {status_info.enqueued_at}")
 
         # 顯示完整命令
         if task.original_command and task.original_command != task.command:

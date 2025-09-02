@@ -490,10 +490,16 @@ def _show_task_details(task_id):
             with col2:
                 st.write(f"**優先級:** {task.priority}")
                 st.write(f"**創建時間:** {task.created_at or '無'}")
-                if task.start:
-                    st.write(f"**開始時間:** {task.start}")
-                if task.end:
-                    st.write(f"**結束時間:** {task.end}")
+
+                # 從狀態信息中獲取時間信息
+                if task.status:
+                    status_key = list(task.status.keys())[0]
+                    status_info = task.status[status_key]
+
+                    if hasattr(status_info, "start") and status_info.start:
+                        st.write(f"**開始時間:** {status_info.start}")
+                    if hasattr(status_info, "end") and status_info.end:
+                        st.write(f"**結束時間:** {status_info.end}")
         else:
             st.error(f"找不到任務 {task_id}")
 

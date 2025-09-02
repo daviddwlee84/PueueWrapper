@@ -19,7 +19,7 @@ sys.path.append(str(Path(__file__).parent.parent / "src"))
 from pueue_wrapper.pueue_wrapper import PueueWrapper
 from pueue_wrapper.models.status import PueueStatus, Task
 from pueue_wrapper.models.logs import PueueLogResponse, TaskLogEntry
-from pueue_wrapper.models.base import TaskControl
+from pueue_wrapper.models.base import TaskControl, GroupStatistics
 
 
 # Initialize session state
@@ -276,3 +276,112 @@ def refresh_button(key: str = "refresh") -> bool:
 def show_last_refresh():
     """顯示最後刷新時間"""
     st.caption(f"最後刷新：{st.session_state.last_refresh.strftime('%H:%M:%S')}")
+
+
+# 組統計相關函數
+def get_status_colors():
+    """獲取任務狀態對應的顏色"""
+    return {
+        "Running": "#28a745",  # 綠色 - 運行中
+        "Queued": "#ffc107",  # 黃色 - 排隊中
+        "Done": "#6f42c1",  # 紫色 - 已完成
+        "Paused": "#fd7e14",  # 橙色 - 暫停
+        "Stashed": "#6c757d",  # 灰色 - 暫存
+        "Failed": "#dc3545",  # 紅色 - 失敗
+        "Success": "#28a745",  # 綠色 - 成功
+    }
+
+
+def get_status_emoji():
+    """獲取任務狀態對應的表情符號"""
+    return {
+        "Running": "🔄",
+        "Queued": "⏳",
+        "Done": "✅",
+        "Paused": "⏸️",
+        "Stashed": "📦",
+        "Failed": "❌",
+        "Success": "✅",
+    }
+
+
+def create_progress_bar_html(
+    stats: Dict[str, int], total: int, show_labels: bool = True
+) -> str:
+    """創建自定義的進度條HTML"""
+    if total == 0:
+        return "<div style='background-color: #f0f0f0; height: 30px; border-radius: 15px; display: flex; align-items: center; justify-content: center;'>無任務</div>"
+
+    colors = get_status_colors()
+
+    # 計算百分比
+    segments = []
+    for status, count in stats.items():
+        if count > 0:
+            percentage = (count / total) * 100
+            color = colors.get(status, "#6c757d")
+            segments.append(
+                {
+                    "status": status,
+                    "count": count,
+                    "percentage": percentage,
+                    "color": color,
+                }
+            )
+
+    # 生成HTML
+    html_segments = []
+    for segment in segments:
+        html_segments.append(
+            f'<div style="background-color: {segment["color"]}; '
+            f'width: {segment["percentage"]}%; height: 100%; '
+            f'display: inline-block;" '
+            f'title="{segment["status"]}: {segment["count"]}"></div>'
+        )
+
+    progress_html = f"""
+    <div style="background-color: #f0f0f0; height: 30px; border-radius: 15px; overflow: hidden; display: flex;">
+        {''.join(html_segments)}
+    </div>
+    """
+
+    if show_labels:
+        label_items = []
+        for segment in segments:
+            emoji = get_status_emoji().get(segment["status"], "❓")
+            label_items.append(
+                f'<span style="margin-right: 15px;">'
+                f'<span style="color: {segment["color"]}; font-weight: bold;">{emoji}</span> '
+                f'{segment["status"]}: {segment["count"]} ({segment["percentage"]:.1f}%)'
+                f"</span>"
+            )
+
+        labels_html = f"""
+        <div style="margin-top: 10px; font-size: 12px;">
+            {''.join(label_items)}
+        </div>
+        """
+        progress_html += labels_html
+
+    return progress_html
+
+
+async def get_group_statistics_data():
+    """獲取所有組的統計數據"""
+    wrapper = st.session_state.pueue_wrapper
+
+    # 獲取所有組
+    groups = await wrapper.get_groups()
+    if not groups:
+        return {}
+
+    # 為每個組獲取統計數據
+    group_stats = {}
+    for group_name in groups.keys():
+        try:
+            stats = await wrapper.get_group_statistics(group_name)
+            group_stats[group_name] = stats
+        except Exception as e:
+            st.error(f"獲取組 '{group_name}' 統計失敗: {str(e)}")
+
+    return group_stats
