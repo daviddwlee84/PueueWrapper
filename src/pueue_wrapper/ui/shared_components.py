@@ -19,7 +19,7 @@ sys.path.append(str(Path(__file__).parent.parent / "src"))
 from pueue_wrapper.pueue_wrapper import PueueWrapper
 from pueue_wrapper.models.status import PueueStatus, Task
 from pueue_wrapper.models.logs import PueueLogResponse, TaskLogEntry
-from pueue_wrapper.models.base import TaskControl, GroupStatistics
+from pueue_wrapper.models.base import TaskControl, GroupStatistics, GroupTimeStatistics
 
 
 # Initialize session state
@@ -385,3 +385,81 @@ async def get_group_statistics_data():
             st.error(f"獲取組 '{group_name}' 統計失敗: {str(e)}")
 
     return group_stats
+
+
+# 時間統計相關函數
+def format_duration(seconds: float) -> str:
+    """格式化時長顯示"""
+    if seconds is None:
+        return "N/A"
+
+    if seconds < 60:
+        return f"{seconds:.1f}秒"
+    elif seconds < 3600:
+        minutes = seconds / 60
+        return f"{minutes:.1f}分鐘"
+    elif seconds < 86400:
+        hours = seconds / 3600
+        return f"{hours:.1f}小時"
+    else:
+        days = seconds / 86400
+        return f"{days:.1f}天"
+
+
+def format_datetime_detailed(dt: datetime) -> str:
+    """詳細格式化日期時間"""
+    if dt is None:
+        return "N/A"
+    return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def create_duration_histogram_data(buckets: Dict[str, int]) -> tuple:
+    """為直方圖準備數據"""
+    if not buckets:
+        return [], []
+
+    labels = list(buckets.keys())
+    values = list(buckets.values())
+    return labels, values
+
+
+async def get_group_time_statistics_data(group_name: str) -> GroupTimeStatistics:
+    """獲取組的詳細時間統計數據"""
+    wrapper = st.session_state.pueue_wrapper
+
+    try:
+        time_stats = await wrapper.get_group_time_statistics(group_name)
+        return time_stats
+    except Exception as e:
+        st.error(f"獲取組 '{group_name}' 時間統計失敗: {str(e)}")
+        return GroupTimeStatistics()
+
+
+def calculate_efficiency_score(time_stats: GroupTimeStatistics) -> float:
+    """計算效率評分（0-100）"""
+    if not time_stats.successful_tasks_count:
+        return 0.0
+
+    score = 70.0  # 基礎分
+
+    # 基於任務完成數量
+    if time_stats.successful_tasks_count > 10:
+        score += 10
+    elif time_stats.successful_tasks_count > 5:
+        score += 5
+
+    # 基於標準差（低標準差 = 高穩定性）
+    if time_stats.std_duration is not None and time_stats.avg_duration is not None:
+        cv = time_stats.std_duration / time_stats.avg_duration  # 變異係數
+        if cv < 0.2:
+            score += 10
+        elif cv < 0.5:
+            score += 5
+
+    # 基於任務完成頻率
+    if time_stats.tasks_per_hour > 5:
+        score += 10
+    elif time_stats.tasks_per_hour > 1:
+        score += 5
+
+    return min(score, 100.0)

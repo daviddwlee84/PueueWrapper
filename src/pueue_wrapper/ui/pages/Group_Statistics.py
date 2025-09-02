@@ -280,6 +280,18 @@ def _display_group_statistics(
                             ) * 100
                             st.write(f"🔄 活躍率: {active_ratio:.2f}%")
 
+                        # 添加時間詳細分析按鈕
+                        if st.button(
+                            f"⏱️ 查看 '{group_name}' 時間詳細分析",
+                            key=f"time_details_{group_name}",
+                            help="查看該組的詳細時間統計和分析",
+                        ):
+                            # 將組名存儲到 session state 中
+                            st.session_state.selected_group_for_time_analysis = (
+                                group_name
+                            )
+                            st.switch_page("pages/Group_Time_Details.py")
+
             st.markdown("---")
 
 

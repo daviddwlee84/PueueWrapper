@@ -248,6 +248,9 @@ def _display_quick_actions():
         if st.button("📊 組統計", use_container_width=True):
             st.switch_page("pages/Group_Statistics.py")
 
+        if st.button("⏱️ 組時間分析", use_container_width=True):
+            st.switch_page("pages/Group_Time_Details.py")
+
         if st.button("📝 任務模板", use_container_width=True):
             st.switch_page("pages/Task_Templates.py")
 

@@ -3,7 +3,7 @@ import threading
 from pueue_wrapper.pueue_wrapper import PueueWrapper
 from pueue_wrapper.models.status import PueueStatus, Group
 from pueue_wrapper.models.logs import PueueLogResponse, TaskLogEntry
-from pueue_wrapper.models.base import TaskControl, GroupStatistics
+from pueue_wrapper.models.base import TaskControl, GroupStatistics, GroupTimeStatistics
 from typing import Optional, Any, List, Dict, Union
 
 
@@ -226,6 +226,18 @@ class PueueWrapperSync:
             GroupStatistics: Statistics for the group including completion rates
         """
         return self._run_async_method("get_group_statistics", group_name)
+
+    def get_group_time_statistics(self, group_name: str) -> GroupTimeStatistics:
+        """
+        Get detailed time-based statistics for a group synchronously.
+
+        Args:
+            group_name: Name of the group to analyze
+
+        Returns:
+            GroupTimeStatistics: Detailed time statistics
+        """
+        return self._run_async_method("get_group_time_statistics", group_name)
 
     def set_group_parallel(
         self, parallel_tasks: int, group: Optional[str] = None

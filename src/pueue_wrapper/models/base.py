@@ -68,6 +68,36 @@ class TaskControl(BaseModel):
     task_ids: Optional[List[int]] = None
 
 
+class GroupTimeStatistics(BaseModel):
+    """Group time-based statistics model"""
+
+    # 時間區間統計
+    earliest_start_time: Optional[datetime] = None
+    latest_end_time: Optional[datetime] = None
+    total_time_span: Optional[float] = None  # 總時間跨度（秒）
+
+    # 運行時長統計（僅成功任務）
+    successful_tasks_count: int = 0
+    min_duration: Optional[float] = None  # 最短運行時長（秒）
+    max_duration: Optional[float] = None  # 最長運行時長（秒）
+    avg_duration: Optional[float] = None  # 平均運行時長（秒）
+    median_duration: Optional[float] = None  # 中位數運行時長（秒）
+    std_duration: Optional[float] = None  # 運行時長標準差（秒）
+
+    # 運行時長分布
+    duration_percentiles: Dict[str, float] = Field(
+        default_factory=dict
+    )  # 25%, 50%, 75%, 95%
+    duration_buckets: Dict[str, int] = Field(default_factory=dict)  # 時長區間分布
+
+    # 效率指標
+    tasks_per_hour: float = 0.0  # 每小時完成任務數
+    average_queue_time: Optional[float] = None  # 平均排隊時間（秒）
+
+    # 失敗任務時間統計
+    failed_tasks_avg_duration: Optional[float] = None  # 失敗任務平均運行時長
+
+
 class GroupStatistics(BaseModel):
     """
     Group statistics model
@@ -88,6 +118,9 @@ class GroupStatistics(BaseModel):
     completion_rate: float = 0.0  # Percentage of completed tasks (successful + failed)
     success_rate: float = 0.0  # Percentage of successful tasks among completed
     failure_rate: float = 0.0  # Percentage of failed tasks among completed
+
+    # Time-based statistics (optional detailed analysis)
+    time_stats: Optional[GroupTimeStatistics] = None
 
     def calculate_rates(self):
         """Calculate completion, success, and failure rates"""
