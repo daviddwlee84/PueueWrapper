@@ -1,3 +1,4 @@
 - [ ] Add Apprise (able to easily configure for notification)
   - [caronc/apprise: Apprise - Push Notifications that work with just about every platform!](https://github.com/caronc/apprise)
 - [ ] Quick install Pueue & Pueued guide & script
+- [ ] Translate UI into English?!

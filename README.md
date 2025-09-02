@@ -16,7 +16,15 @@ pueue-api-server --host 127.0.0.1 --port 8001 --reload
 
 # Streamlit UI
 pueue-ui-server
+```
 
+```bash
+# Install as a package
+uv add git+https://github.com/daviddwlee84/PueueWrapper
+
+# Install as a tool
+uv tool install git+https://github.com/daviddwlee84/PueueWrapper
+uv tool upgrade git+https://github.com/daviddwlee84/PueueWrapper
 ```
 
 ---
